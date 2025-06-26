@@ -5,6 +5,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+
 void main() => runApp(const FarmAI());
 
 class FarmAI extends StatelessWidget {
@@ -34,11 +38,26 @@ class MainTabController extends StatefulWidget {
 class _MainTabControllerState extends State<MainTabController> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = [
-    const PlantDiaryScreen(),
-    const PlantHomePage(),
-    
-  ];
+  late List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      const PlantDiaryScreen(),
+      PlantSelectionScreen(
+        onPlantSelected: (selectedPlant) {
+          // Navigator.pop(context); // Close the selection screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PlantHomePage(selectedPlant: selectedPlant,), // Navigate to PlantHomePage
+            ),
+          );
+        },
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,14 +67,16 @@ class _MainTabControllerState extends State<MainTabController> {
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         items: const [
-           BottomNavigationBarItem(
-            icon: Icon(Icons.book),
+            BottomNavigationBarItem(
+            icon: Icon(Icons.book, color: Colors.green),
             label: 'Nhật ký',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            backgroundColor: Colors.white,
+            ),
+            BottomNavigationBarItem(
+            icon: Icon(Icons.home, color: Colors.green),
             label: 'Hình Ảnh Cây Trồng',
-          ),
+            backgroundColor: Colors.white,
+            ),
          
         ],
       ),
@@ -65,7 +86,10 @@ class _MainTabControllerState extends State<MainTabController> {
 
 
 class PlantHomePage extends StatefulWidget {
-  const PlantHomePage({super.key});
+   final String selectedPlant;
+
+  // This widget serves as the home page for plant images
+  const PlantHomePage({super.key, required this.selectedPlant});
   @override
   State<PlantHomePage> createState() => _PlantHomePageState();
 }
@@ -81,7 +105,7 @@ class _PlantHomePageState extends State<PlantHomePage> {
 
   Future<void> loadPhotos() async {
     final dir = await getApplicationDocumentsDirectory();
-    final path = Directory('${dir.path}/photos');
+    final path = Directory('${dir.path}/${widget.selectedPlant}/photos');
     if (await path.exists()) {
       final files = path.listSync().whereType<File>().toList()
         ..sort((a, b) => b.path.compareTo(a.path));
@@ -165,27 +189,80 @@ class _PlantHomePageState extends State<PlantHomePage> {
           ),
           const SizedBox(height: 30),
           if (photos.length >= 2)
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF689F38),
-                minimumSize: const Size.fromHeight(50),
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => CompareScreen(img1: photos[0], img2: photos[1]),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.compare),
-              label: const Text("So sánh ảnh gần nhất", style: TextStyle(fontSize: 16, color: Colors.blue)),
-            ),
+          ElevatedButton(
+  onPressed: () async {
+    final result = await compareImagesWithChatGPT(photos[0],  photos[1]);
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Phân tích từ GPT"),
+        content: Text(result),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Đóng")),
+        ],
+      ),
+    );
+  },
+  child: const Text("GPT So sánh & phân tích"),
+),
+
+            // ElevatedButton.icon(
+            //   style: ElevatedButton.styleFrom(
+            //     backgroundColor: const Color(0xFF689F38),
+            //     minimumSize: const Size.fromHeight(50),
+            //   ),
+            //   onPressed: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //         builder: (_) => CompareScreen(img1: photos[0], img2: photos[1]),
+            //       ),
+            //     );
+            //   },
+            //   icon: const Icon(Icons.compare),
+            //   label: const Text("So sánh ảnh gần nhất", style: TextStyle(fontSize: 16, color: Colors.blue)),
+            // ),
         ],
       ),
     );
   }
 }
+class PlantSelectionScreen extends StatelessWidget {
+  final Function(String) onPlantSelected;
+
+  const PlantSelectionScreen({super.key, required this.onPlantSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    final plants = {
+      "🍅 Cà chua": ["Khỏe mạnh", "Bệnh mốc sương", "Bệnh mốc lá"],
+      "🌽 Ngô": ["Khỏe mạnh", "Bệnh gỉ sắt"],
+      "🥔 Khoai tây": ["Khỏe mạnh", "Bệnh đốm lá sớm", "Bệnh mốc sương"],
+      "🍇 Nho": ["Khỏe mạnh", "Bệnh thối đen"],
+      "🌾 Lúa": ["Khỏe mạnh", "Bệnh đạo ôn lá"],
+      "🌶️ Ớt": ["Khỏe mạnh", "Bệnh đốm lá"],
+    };
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Chọn loại cây trồng"),
+        backgroundColor: const Color(0xFF4CAF50),
+      ),
+      body: ListView.builder(
+        itemCount: plants.keys.length,
+        itemBuilder: (context, index) {
+          final plant = plants.keys.elementAt(index);
+          return ListTile(
+            title: Text(plant),
+            subtitle: Text(plants[plant]!.join(", ")),
+            onTap: () => onPlantSelected(plant),
+          );
+        },
+      ),
+    );
+  }
+}
+
 
 class DetailImage extends StatelessWidget {
   final File file;
@@ -217,5 +294,56 @@ class CompareScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+Future<String> compareImagesWithChatGPT(File img1, File img2) async {
+  final apiKey = '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';
+
+  final bytes1 = await img1.readAsBytes();
+  final bytes2 = await img2.readAsBytes();
+
+  final base64Img1 = base64Encode(bytes1);
+  final base64Img2 = base64Encode(bytes2);
+
+  final uri = Uri.parse("https://api.openai.com/v1/chat/completions");
+
+  final headers = {
+    'Authorization': 'Bearer $apiKey',
+    'Content-Type': 'application/json',
+  };
+
+  final body = jsonEncode({
+    "model": "gpt-4.1",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text":
+                "So sánh hai hình ảnh cây trồng này. Cây có phát triển tốt không? Có hiện tượng vàng lá, sâu bệnh, hoặc thay đổi hình dạng không? Đưa ra đánh giá và gợi ý chăm sóc nếu cần."
+          },
+          {
+            "type": "image_url",
+            "image_url": {"url": "data:image/jpeg;base64,$base64Img1"}
+          },
+          {
+            "type": "image_url",
+            "image_url": {"url": "data:image/jpeg;base64,$base64Img2"}
+          }
+        ]
+      }
+    ],
+    "max_tokens": 1000
+  });
+
+  final res = await http.post(uri, headers: headers, body: body);
+  if (res.statusCode == 200) {
+    final responseData = jsonDecode(res.body);
+    final text = responseData['choices'][0]['message']['content'];
+    return text;
+  } else {
+    throw Exception("Lỗi khi gọi ChatGPT: ${res.statusCode} - ${res.body}");
   }
 }
