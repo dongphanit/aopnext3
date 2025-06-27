@@ -51,7 +51,9 @@ class _MainTabControllerState extends State<MainTabController> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => PlantHomePage(selectedPlant: selectedPlant,), // Navigate to PlantHomePage
+              builder: (_) => PlantHomePage(
+                selectedPlant: selectedPlant,
+              ), // Navigate to PlantHomePage
             ),
           );
         },
@@ -67,26 +69,24 @@ class _MainTabControllerState extends State<MainTabController> {
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         items: const [
-            BottomNavigationBarItem(
+          BottomNavigationBarItem(
             icon: Icon(Icons.book, color: Colors.green),
             label: 'Nhật ký',
             backgroundColor: Colors.white,
-            ),
-            BottomNavigationBarItem(
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.home, color: Colors.green),
             label: 'Hình Ảnh Cây Trồng',
             backgroundColor: Colors.white,
-            ),
-         
+          ),
         ],
       ),
     );
   }
 }
 
-
 class PlantHomePage extends StatefulWidget {
-   final String selectedPlant;
+  final String selectedPlant;
 
   // This widget serves as the home page for plant images
   const PlantHomePage({super.key, required this.selectedPlant});
@@ -105,7 +105,7 @@ class _PlantHomePageState extends State<PlantHomePage> {
 
   Future<void> loadPhotos() async {
     final dir = await getApplicationDocumentsDirectory();
-    final path = Directory('${dir.path}/${widget.selectedPlant}/photos');
+    final path = Directory('${dir.path}/photos/${widget.selectedPlant}');
     if (await path.exists()) {
       final files = path.listSync().whereType<File>().toList()
         ..sort((a, b) => b.path.compareTo(a.path));
@@ -118,7 +118,7 @@ class _PlantHomePageState extends State<PlantHomePage> {
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked != null) {
       final dir = await getApplicationDocumentsDirectory();
-      final folder = Directory('${dir.path}/photos');
+      final folder = Directory('${dir.path}/photos/${widget.selectedPlant}');
       if (!await folder.exists()) await folder.create();
       final now = DateTime.now();
       final name = "${now.year}-${now.month}-${now.day}_${now.microsecond}.jpg";
@@ -172,14 +172,16 @@ class _PlantHomePageState extends State<PlantHomePage> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => DetailImage(file: file, date: date)),
+                    MaterialPageRoute(
+                        builder: (_) => DetailImage(file: file, date: date)),
                   );
                 },
                 child: Column(
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.file(file, height: 100, width: 100, fit: BoxFit.cover),
+                      child: Image.file(file,
+                          height: 100, width: 100, fit: BoxFit.cover),
                     ),
                     Text(date, style: const TextStyle(fontSize: 13)),
                   ],
@@ -189,44 +191,48 @@ class _PlantHomePageState extends State<PlantHomePage> {
           ),
           const SizedBox(height: 30),
           if (photos.length >= 2)
-          ElevatedButton(
-  onPressed: () async {
-    final result = await compareImagesWithChatGPT(photos[0],  photos[1]);
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Phân tích từ GPT"),
-        content: Text(result),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Đóng")),
-        ],
-      ),
-    );
-  },
-  child: const Text("GPT So sánh & phân tích"),
-),
+            ElevatedButton(
+              onPressed: () async {
+                final result =
+                    await compareImagesWithChatGPT(photos[0], photos[1]);
+                showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text("Phân tích từ GPT"),
+                    content: Text(result),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text("Đóng")),
+                    ],
+                  ),
+                );
+              },
+              child: const Text("GPT So sánh & phân tích"),
+            ),
 
-            // ElevatedButton.icon(
-            //   style: ElevatedButton.styleFrom(
-            //     backgroundColor: const Color(0xFF689F38),
-            //     minimumSize: const Size.fromHeight(50),
-            //   ),
-            //   onPressed: () {
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(
-            //         builder: (_) => CompareScreen(img1: photos[0], img2: photos[1]),
-            //       ),
-            //     );
-            //   },
-            //   icon: const Icon(Icons.compare),
-            //   label: const Text("So sánh ảnh gần nhất", style: TextStyle(fontSize: 16, color: Colors.blue)),
-            // ),
+          // ElevatedButton.icon(
+          //   style: ElevatedButton.styleFrom(
+          //     backgroundColor: const Color(0xFF689F38),
+          //     minimumSize: const Size.fromHeight(50),
+          //   ),
+          //   onPressed: () {
+          //     Navigator.push(
+          //       context,
+          //       MaterialPageRoute(
+          //         builder: (_) => CompareScreen(img1: photos[0], img2: photos[1]),
+          //       ),
+          //     );
+          //   },
+          //   icon: const Icon(Icons.compare),
+          //   label: const Text("So sánh ảnh gần nhất", style: TextStyle(fontSize: 16, color: Colors.blue)),
+          // ),
         ],
       ),
     );
   }
 }
+
 class PlantSelectionScreen extends StatelessWidget {
   final Function(String) onPlantSelected;
 
@@ -241,6 +247,8 @@ class PlantSelectionScreen extends StatelessWidget {
       "🍇 Nho": ["Khỏe mạnh", "Bệnh thối đen"],
       "🌾 Lúa": ["Khỏe mạnh", "Bệnh đạo ôn lá"],
       "🌶️ Ớt": ["Khỏe mạnh", "Bệnh đốm lá"],
+      // Add more plants and their conditions as needed
+      "🌱 Cây trồng khác": ["Khỏe mạnh", "Bệnh khác"],
     };
 
     return Scaffold(
@@ -255,14 +263,13 @@ class PlantSelectionScreen extends StatelessWidget {
           return ListTile(
             title: Text(plant),
             subtitle: Text(plants[plant]!.join(", ")),
-            onTap: () => onPlantSelected(plant),
+            onTap: () => onPlantSelected(index.toString()),
           );
         },
       ),
     );
   }
 }
-
 
 class DetailImage extends StatelessWidget {
   final File file;
@@ -298,7 +305,8 @@ class CompareScreen extends StatelessWidget {
 }
 
 Future<String> compareImagesWithChatGPT(File img1, File img2) async {
-  final apiKey = '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';
+  final apiKey =
+      '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';
 
   final bytes1 = await img1.readAsBytes();
   final bytes2 = await img2.readAsBytes();
