@@ -25,12 +25,5 @@ echo "📦 Installing CocoaPods dependencies..."
 cd ios
 pod install --repo-update
 
-echo "🛠️ Resolving Swift Package dependencies..."
-xcodebuild -resolvePackageDependencies \
-  -workspace Runner.xcworkspace \
-  -scheme Runner \
-  -derivedDataPath /Volumes/workspace/DerivedData \
-  -hideShellScriptEnvironment
-
 echo "✅ Post-clone script completed successfully."
 exit 0
