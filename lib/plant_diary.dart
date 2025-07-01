@@ -33,7 +33,6 @@ class _PlantDiaryScreenState extends State<PlantDiaryScreen> {
       notes = files;
     });
   }
-
   Future<void> addNote() async {
     final controller = TextEditingController();
     final now = DateTime.now();
@@ -42,24 +41,52 @@ class _PlantDiaryScreenState extends State<PlantDiaryScreen> {
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text("Ghi chú ngày $dateStr"),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Text(
+          "📝 Ghi chú ngày $dateStr",
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+            color: Color(0xFF4CAF50),
+          ),
+        ),
         content: TextField(
           controller: controller,
           maxLines: 5,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: "Ví dụ: Trời mưa nhẹ, hôm nay bón phân kali...",
-            border: OutlineInputBorder(),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            filled: true,
+            fillColor: Colors.grey[200],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Huỷ")),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              "Huỷ",
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF4CAF50),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             onPressed: () async {
               final dir = await getNoteDir();
               final noteFile = File('${dir.path}/$dateStr-${DateTime.now().microsecondsSinceEpoch}.txt');
               await noteFile.writeAsString(controller.text);
-              Navigator.pop(ctx);
-              await loadNotes();
+              if (mounted) {
+                Navigator.pop(ctx);
+                await loadNotes();
+              }
             },
             child: const Text("Lưu"),
           ),
@@ -110,7 +137,6 @@ class _PlantDiaryScreenState extends State<PlantDiaryScreen> {
     );
   }
 }
-
 class DiaryDetailScreen extends StatelessWidget {
   final String date;
   final String content;
@@ -120,12 +146,41 @@ class DiaryDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("📝 Ghi chú ngày $date")),
+      appBar: AppBar(
+        title: Text("📝 Ghi chú ngày $date"),
+        backgroundColor: const Color(0xFF4CAF50),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Text(
-          content,
-          style: const TextStyle(fontSize: 16),
+        child: Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Ngày: $date",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF4CAF50),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  content,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
