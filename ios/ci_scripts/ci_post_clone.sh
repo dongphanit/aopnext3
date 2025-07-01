@@ -3,27 +3,24 @@
 # Fail this script if any subcommand fails.
 set -e
 
-echo "🔧 Post-clone script starting..."
-
 # The default execution directory of this script is the ci_scripts directory.
-cd $CI_PRIMARY_REPOSITORY_PATH
+cd $CI_PRIMARY_REPOSITORY_PATH # change working directory to the root of your cloned repo.
 
-echo "📥 Installing Flutter SDK..."
-git clone https://github.com/flutter/flutter.git --depth 1 -b 3.27.4 $HOME/flutter
+# Install Flutter using git.
+git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter
 export PATH="$PATH:$HOME/flutter/bin"
 
-echo "⚙️ Pre-caching iOS artifacts..."
+# Install Flutter artifacts for iOS (--ios), or macOS (--macos) platforms.
 flutter precache --ios
 
-echo "📦 Running flutter pub get..."
+# Install Flutter dependencies.
 flutter pub get
 
-echo "🍺 Installing CocoaPods..."
-HOMEBREW_NO_AUTO_UPDATE=1 brew install cocoapods
+# Install CocoaPods using Homebrew.
+HOMEBREW_NO_AUTO_UPDATE=1 # disable homebrew's automatic updates.
+brew install cocoapods
 
-echo "📦 Installing CocoaPods dependencies..."
-cd ios
-pod install --repo-update
+# Install CocoaPods dependencies.
+cd ios && pod install # run `pod install` in the `ios` directory.
 
-echo "✅ Post-clone script completed successfully."
 exit 0
