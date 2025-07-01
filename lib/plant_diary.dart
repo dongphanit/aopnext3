@@ -44,25 +44,49 @@ class _PlantDiaryScreenState extends State<PlantDiaryScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        title: Text(
-          "📝 Ghi chú ngày $dateStr",
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-            color: Color(0xFF4CAF50),
-          ),
-        ),
-        content: TextField(
-          controller: controller,
-          maxLines: 5,
-          decoration: InputDecoration(
-            hintText: "Ví dụ: Trời mưa nhẹ, hôm nay bón phân kali...",
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+        title: Row(
+          children: [
+            const Icon(Icons.edit_note, color: Color(0xFF4CAF50)),
+            const SizedBox(width: 8),
+            Text(
+              "Ghi chú ngày $dateStr",
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                color: Color(0xFF4CAF50),
+              ),
             ),
-            filled: true,
-            fillColor: Colors.grey[200],
-          ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: controller,
+              maxLines: 5,
+              decoration: InputDecoration(
+                hintText: "Ví dụ: Trời mưa nhẹ, hôm nay bón phân kali...",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: Colors.grey[200],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.info, color: Colors.grey),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "Nhập ghi chú chi tiết về cây trồng của bạn.",
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
         actions: [
           TextButton(
