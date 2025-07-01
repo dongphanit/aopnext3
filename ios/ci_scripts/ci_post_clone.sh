@@ -22,5 +22,9 @@ brew install cocoapods
 
 # Install CocoaPods dependencies.
 cd ios && pod install # run `pod install` in the `ios` directory.
-
+xcodebuild -resolvePackageDependencies \
+  -workspace Runner.xcworkspace \
+  -scheme Runner \
+  -derivedDataPath /Volumes/workspace/DerivedData \
+  -hideShellScriptEnvironment
 exit 0
