@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:farmai/guide.dart';
 import 'package:farmai/plant_diary.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(const FarmAI());
 
@@ -101,7 +103,41 @@ class _PlantHomePageState extends State<PlantHomePage> {
   void initState() {
     super.initState();
     loadPhotos();
+    checkAndShowIntro(context);
   }
+
+
+  Future<void> checkAndShowIntro(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    final seenIntro = prefs.getBool('seen_home_intro') ?? false;
+
+    if (!seenIntro) {
+      showReminderIntro(context);
+      await prefs.setBool('seen_home_intro', true);
+    }
+  }
+
+  void showReminderIntro(BuildContext context) {
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: SizedBox(
+          height: 500,
+          child: introductionStep(
+            () {
+              Navigator.pop(context);
+              // close dialog
+            
+            },
+        ),
+      ),
+    ),
+    );
+  }
+
 
   Future<void> loadPhotos() async {
     final dir = await getApplicationDocumentsDirectory();
@@ -126,9 +162,9 @@ class _PlantHomePageState extends State<PlantHomePage> {
       setState(() => photos.insert(0, saved));
     }
   }
-
   @override
   Widget build(BuildContext context) {
+    
     final today = photos.isNotEmpty ? photos.first : null;
 
     return Scaffold(
